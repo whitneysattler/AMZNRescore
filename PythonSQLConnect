@@ -1,0 +1,28 @@
+"""
+Created on Thu Mar 29
+@author: witless
+"""
+
+import pyodbc as db
+
+#Trusted_Connection uses the built-in Microsoft security features
+#This code also assumes taht there is a DATABASE called "testDB"
+conn = db.connect('DRIVER={ODBC Driver 13 for SQL Server};Server=localhost;DATABASE=testDB;Trusted_Connection=yes')
+cursor = conn.cursor()
+
+#Creates a table in the database called product
+cursor.execute('CREATE TABLE product(a int, b int, c int);')
+#Inserts a record into the table
+cursor.execute('INSERT INTO product (a, b, c) VALUES (1, 2, 3);')
+#Save the changes.  Without this line, the table creation is not commited to the server
+conn.commit()
+#Closes the connection
+conn.close()
+
+conn = db.connect('DRIVER={ODBC Driver 13 for SQL Server};Server=localhost;DATABASE=testDB;Trusted_Connection=yes')
+cursor = conn.cursor()
+
+cursor.execute('SELECT * FROM product;')
+#cursor.fetch recieves one record at a time, cursor.fetchall recieves all at once
+for row in cursor.fetchall():
+    print(row)
