@@ -1,0 +1,111 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Apr  3 11:54:31 2018
+
+@author: Witless
+"""
+import urllib.request
+import urllib.parse
+from bs4 import BeautifulSoup as soup
+import json
+from selenium import webdriver
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.keys import Keys
+import re
+
+def is_absolute(url):
+    return bool(urllib.parse.urlparse(url).netloc)
+
+def userURL(userID):
+    match = re.search("^/gp/profile/", userID)
+    if match:
+        return ("https://www.amazon.com" + userID)
+    else:
+        return ("https://www.amazon.com/gp/profile/amzn1.account." + userID)
+
+def getReviews(webPage):
+    return (webPage.find_elements_by_class_name("glimpse-card"))
+
+def getPageBody(driver):
+    return driver.find_element_by_tag_name('body')
+
+def getNumReviews(webPage):
+    reviewNumber = webPage.find_element_by_xpath('//*[@id="profile_v5"]/div/div/div[4]/div[2]/div[1]/div[2]/div/div[2]/a/div/div[1]/span')
+    return int(reviewNumber.text)
+            
+
+def scroller(browser, cycleMax = 50):
+    webPage = getPageBody(browser)
+    cycles = 0
+    oldNumReviews = len(getReviews(browser))
+    while True:
+        webPage.send_keys(Keys.END)
+        newNumReviews = len(getReviews(browser))
+        if oldNumReviews == newNumReviews:
+            cycles += 1
+            if cycles == 6:
+                print (newNumReviews)
+        else:
+            cycles = 0
+            oldNumReviews = newNumReviews
+        if (cycles == cycleMax) or (newNumReviews > 1000):
+            break
+    return getReviews(browser)
+    #while True:
+        #if (len(getReviews(webPage)) == totalReviews):
+            #break
+        
+def scrubUser(userID):
+    browser = webdriver.Chrome(executable_path='C:/temp/chromedriver.exe')
+    userLoc = userURL(userID)
+    
+    try:
+        browser.get(userLoc)
+    except:
+        browser.close()
+        return ("URL for user could not be found")
+    
+    print("URL found")
+    reviews = scroller(browser, 40)
+    for review in reviews:
+        print(review.find_element_by_xpath("div[3]/a/div/div[2]/div[1]/span").text)
+    print(len(reviews))
+    
+    
+    
+    
+    
+#   finalReview = getReviews(browser)[-1]
+#   print(finalReview.find_elements_by_class_name("glimpse-product-title")[0].text)
+        
+#Doesn't work since all reviews may not be shown    
+#    webPage = getPageBody(browser)
+#    totalReviews = getNumReviews(webPage)
+#    while (totalReviews != len(getReviews(browser))):
+#        webPage.send_keys(Keys.END)
+#    xPATH = '//*[@id="feed-content"]/div/div['+str(totalReviews)+']'
+#    finalReview = WebDriverWait(browser, 10).until(EC.presence_of_element_located((By.XPATH, xPATH)))
+#    print(len(getReviews(getPageBody(browser))))
+    
+''' scrollTrigger = WebDriverWait(browser, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "glimpse-main-pagination-trigger")))
+    Reviews = browser.find_elements_by_class_name("glimpse-card")
+    print(len(Reviews))
+    oldFinalReview = browser.find_elements_by_class_name("glimpse-card")[-1]
+    oldText = oldFinalReview.find_elements_by_class_name("glimpse-product-title")[0].text
+    print("Old review:", oldText)
+    while True:
+        browser.execute_script('arguments[0].scrollIntoView()', scrollTrigger)
+        browser.implicitly_wait(100)
+        Reviews = browser.find_elements_by_class_name("glimpse-card")
+        print(len(Reviews))
+        newFinalReview = browser.find_elements_by_class_name("glimpse-card")[-1]
+        newText = newFinalReview.find_elements_by_class_name("glimpse-product-title")[0].text
+        print("new review:", newText)
+        if (oldFinalReview == newFinalReview):
+            print("Done")
+            break
+        oldFinalReview = newFinalReview
+        scrollTrigger = WebDriverWait(browser, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "glimpse-main-pagination-trigger")))'''
+# window.scrollTo(0, document.body.scrollHeight - 1000);
